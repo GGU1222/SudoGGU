@@ -1,0 +1,464 @@
+:root {
+  /* Tells the browser this page already adapts its own colors to both schemes,
+     so Android Chrome/WebView's automatic dark-theme darkening doesn't also
+     kick in on top of (and inconsistently with) our own @media dark colors —
+     without this, dark mode can render visibly darker/different on Android
+     than on desktop browsers even though the CSS values are identical. */
+  color-scheme: light dark;
+
+  --bg: #fbeee4;
+  --surface: #ffffff;
+  --surface-2: #fff7f0;
+  --ink: #6b4038;
+  --ink-soft: #a9806f;
+  --ink-faint: #c9ac9d;
+  --shadow: 0 10px 30px -12px rgba(107, 64, 56, 0.28);
+  --shadow-sm: 0 2px 8px -2px rgba(107, 64, 56, 0.18);
+  --radius-lg: 28px;
+  --radius-md: 18px;
+  --radius-sm: 10px;
+
+  /* Verified via CIE Lab Delta-E (not just hue angle, which doesn't map linearly to
+     perceived difference) — every pair of these 9 colors is >28 apart, comfortably
+     above the ~20 threshold for "clearly distinct" categorical colors. */
+  --palette-0: hsl(20, 68%, 56%);  /* orange */
+  --palette-1: hsl(50, 70%, 42%);  /* dark gold/mustard */
+  --palette-2: hsl(95, 40%, 48%);  /* olive green */
+  --palette-3: hsl(155, 45%, 36%); /* deep teal */
+  --palette-4: hsl(195, 60%, 52%); /* sky blue */
+  --palette-5: hsl(230, 55%, 62%); /* periwinkle */
+  --palette-6: hsl(265, 45%, 48%); /* purple */
+  --palette-7: hsl(305, 50%, 58%); /* orchid/magenta */
+  --palette-8: hsl(345, 62%, 52%); /* rose red */
+
+  /* Reuse the real board's own cell colors so the help modal's diagrams match
+     in-game cell darkness exactly, rather than inventing separate pastel tones. */
+  --rule-x-bg: var(--palette-8);  /* rose red: cells an X rules out */
+  --rule-ok-bg: var(--palette-2); /* olive green: cells still in play */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #2a1e19;
+    --surface: #362822;
+    --surface-2: #40302a;
+    --ink: #f3e4da;
+    --ink-soft: #c6a594;
+    --ink-faint: #8a6a5c;
+    --shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.55);
+    --shadow-sm: 0 2px 8px -2px rgba(0, 0, 0, 0.45);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #2a1e19;
+  --surface: #362822;
+  --surface-2: #40302a;
+  --ink: #f3e4da;
+  --ink-soft: #c6a594;
+  --ink-faint: #8a6a5c;
+  --shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.55);
+  --shadow-sm: 0 2px 8px -2px rgba(0, 0, 0, 0.45);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #fbeee4;
+  --surface: #ffffff;
+  --surface-2: #fff7f0;
+  --ink: #6b4038;
+  --ink-soft: #a9806f;
+  --ink-faint: #c9ac9d;
+  --shadow: 0 10px 30px -12px rgba(107, 64, 56, 0.28);
+  --shadow-sm: 0 2px 8px -2px rgba(107, 64, 56, 0.18);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, "Segoe UI Rounded", "SF Pro Rounded", "Nunito",
+    system-ui, "Segoe UI", sans-serif;
+  display: flex;
+  justify-content: center;
+  padding: 32px 16px 48px;
+}
+
+.app {
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.toprow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Toprow items (help button / lives / progress pill / new-game button) all
+   share this height so they line up as a single visual row instead of each
+   sizing itself from its own font/padding. */
+.toprow-h { height: 34px; box-sizing: border-box; }
+
+/* One grouped pill (like .progress-pill), not per-icon badges — same
+   background/shadow/shape so the two toprow "info" pills read as a family. */
+.lives {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--surface);
+  border-radius: 999px;
+  padding: 0 14px;
+  box-shadow: var(--shadow-sm);
+  font-size: 16px;
+}
+.lives span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.progress-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface);
+  border-radius: 999px;
+  padding: 0 14px;
+  box-shadow: var(--shadow-sm);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+}
+
+button.newgame {
+  appearance: none;
+  border: none;
+  border-radius: 999px;
+  padding: 0 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Same background/text colors as .iconbtn (the help button), so the toprow's
+     two buttons read as one family. */
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+button.newgame:hover { filter: brightness(1.1); }
+button.newgame:active { transform: scale(0.96); }
+button.newgame:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+.iconbtn {
+  flex: none;
+  appearance: none;
+  border: none;
+  border-radius: 50%;
+  width: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 15px;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+.iconbtn:hover { filter: brightness(1.06); }
+.iconbtn:active { transform: scale(0.94); }
+.iconbtn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+.board-wrap {
+  position: relative;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 14px;
+  box-shadow: var(--shadow);
+}
+
+.board {
+  display: grid;
+  grid-auto-rows: 1fr; /* force every row to the same height regardless of glyph
+                           content, otherwise a taller glyph in one cell stretches
+                           its row and the fixed aspect-ratio container compresses
+                           the others to compensate */
+  gap: 4px;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  user-select: none;
+  touch-action: none; /* let our pointer handlers own drag gestures, not page scroll */
+}
+
+.cell {
+  appearance: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(14px, 4.4vw, 22px);
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.08s ease, filter 0.12s ease;
+  position: relative;
+  /* A grid item's automatic minimum size otherwise defaults to its content's
+     min-content size, which a 1fr column/row track can't shrink below — so one
+     cell whose rabbit emoji happens to render wider (observed on Windows Chrome,
+     where Segoe UI Emoji's glyph metrics run wider than other platforms') blows
+     its whole column out while every other column gets squeezed to compensate.
+     Overriding both to 0 lets every .cell actually hold to its equal 1fr share
+     regardless of glyph content. */
+  min-width: 0;
+  min-height: 0;
+  /* Touch gestures are recognized by our own JS (tap/double-tap/drag), so the
+     browser must not intercept them as scroll, double-tap-zoom, or a long-press
+     callout/selection menu — touch-action alone isn't enough on iOS Safari. */
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.cell:hover { filter: brightness(1.06); }
+.cell:active { transform: scale(0.94); }
+.cell:focus-visible { outline: 3px solid var(--ink); outline-offset: -3px; }
+
+/* Not scoped to .cell — the help modal reuses these same glyph classes in its
+   rule/control diagrams so they render identically to the real board. */
+.glyph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  line-height: 1;
+}
+
+.glyph.rabbit {
+  font-size: 1.35em; /* Leaves headroom below the cell's box so a wider-than-usual
+                        emoji font doesn't press right up against the
+                        min-width/min-height fix's margin above. */
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.25));
+}
+
+/* X is drawn as two crossed bars rather than a unicode glyph so its thickness
+   stays under our control — clearly thicker and more visible than a thin
+   character glyph would render at small cell sizes. */
+.glyph.x {
+  position: relative;
+}
+.glyph.x .bar {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 68%;
+  height: 18%;
+  background: rgba(50, 50, 50, 0.85);
+  border-radius: 999px;
+  /* transform rotates each bar's entire rendered box, box-shadow included, so a
+     directional offset (e.g. "0 1px 1px") would point a different absolute
+     screen direction on bar1 (+45deg) than on bar2 (-45deg), making the two
+     arms look mismatched even though the bars themselves are symmetric. An
+     unoffset glow avoids this since it has no direction to rotate. */
+  box-shadow: 0 0 1.5px rgba(255, 255, 255, 0.35);
+}
+.glyph.x .bar1 { transform: translate(-50%, -50%) rotate(45deg); }
+.glyph.x .bar2 { transform: translate(-50%, -50%) rotate(-45deg); }
+
+/* A wrong rabbit guess reuses the X shape but in a dark blackish-red so it reads as
+   a mistake, distinct from the player's own deliberate X marks. */
+.glyph.x.wrong .bar {
+  background: rgba(74, 14, 14, 0.92);
+}
+
+.overlay {
+  position: absolute;
+  inset: 14px;
+  border-radius: var(--radius-md);
+  background: rgba(30, 18, 15, 0.55);
+  backdrop-filter: blur(2px);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  color: #fff;
+  padding: 20px;
+}
+.overlay.show { display: flex; }
+.overlay .headline {
+  font-size: 22px;
+  font-weight: 800;
+}
+.overlay .sub {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.help-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 12, 10, 0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 50;
+}
+.help-overlay.show { display: flex; }
+
+.help-card {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  max-height: 85vh;
+  overflow-y: auto;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 26px 22px 22px;
+  color: var(--ink);
+}
+
+.help-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  appearance: none;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-2);
+  color: var(--ink-soft);
+  font-size: 14px;
+  cursor: pointer;
+}
+.help-close:hover { filter: brightness(0.96); }
+.help-close:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+.help-card h2 {
+  margin: 0 0 6px;
+  font-size: 20px;
+  font-weight: 800;
+}
+.help-goal {
+  margin: 0 0 20px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+.help-card h3 {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.help-rules {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.rule-demo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+}
+.rule-demo p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.mini-grid {
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-auto-rows: 1fr; /* rows are otherwise auto-sized by content, so the row
+                           holding the taller rabbit emoji grows at the expense
+                           of the other two within the grid's fixed 90px height —
+                           same fix as .board uses for the real game grid. */
+  gap: 3px;
+  width: 90px;
+  height: 90px;
+  font-size: 13px;
+}
+.mini-cell {
+  min-width: 0; /* pairs with grid-auto-rows: 1fr above — without it, a mini-cell's
+                    content can still force its own row/column past its 1fr share */
+  min-height: 0;
+  border-radius: 6px;
+  background: var(--rule-ok-bg);
+}
+.mini-cell.mark-x,
+.mini-cell.mark-rabbit {
+  background: var(--rule-x-bg);
+}
+
+.help-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.control-demo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+}
+.control-demo .glyph {
+  flex: none;
+  width: 34px;
+  height: 34px;
+}
+.control-demo p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cell, button.newgame { transition: none; }
+}

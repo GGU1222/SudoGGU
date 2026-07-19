@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark" />
+  <title>🐰 숨꾸찾 스도꾸 🐰</title>
+  <link rel="stylesheet" href="web/css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>🐰 숨꾸찾 스도꾸 🐰</h1>
+    </header>
+
+    <div class="toprow">
+      <button class="iconbtn toprow-h" id="helpBtn" aria-label="게임 방법" title="게임 방법">❓</button>
+      <div class="lives toprow-h" id="lives" aria-label="남은 목숨"></div>
+      <div class="progress-pill toprow-h">🐇 <span id="progress">0/0</span></div>
+      <button class="newgame toprow-h" id="newGameBtn">새 게임</button>
+    </div>
+
+    <div class="board-wrap">
+      <div class="board" id="board" role="grid" aria-label="게임 보드"></div>
+      <div class="overlay" id="overlay">
+        <div class="headline" id="overlayHeadline"></div>
+        <div class="sub" id="overlaySub"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="help-overlay" id="helpOverlay">
+    <div class="help-card" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+      <button class="help-close" id="helpCloseBtn" aria-label="닫기">✕</button>
+      <h2 id="helpTitle">게임 방법</h2>
+      <p class="help-goal">각 색상 영역 · 행 · 열에 토끼가 정확히 한 마리씩 있도록 추론해서 찾는 퍼즐이에요.</p>
+
+      <h3>배치 규칙</h3>
+      <div class="help-rules">
+        <div class="rule-demo">
+          <div class="mini-grid">
+            <span class="mini-cell mark-x"><span class="glyph x"><span class="bar bar1"></span><span class="bar bar2"></span></span></span>
+            <span class="mini-cell mark-x"><span class="glyph x"><span class="bar bar1"></span><span class="bar bar2"></span></span></span>
+            <span class="mini-cell mark-x"><span class="glyph x"><span class="bar bar1"></span><span class="bar bar2"></span></span></span>
+            <span class="mini-cell mark-x"><span class="glyph x"><span class="bar bar1"></span><span class="bar bar2"></span></span></span>
+            <span class="mini-cell mark-rabbit"><span class="glyph rabbit">🐰</span></span>
+            <span class="mini-cell"></span>
+            <span class="mini-cell mark-x"><span class="glyph x"><span class="bar bar1"></span><span class="bar bar2"></span></span></span>
+            <span class="mini-cell"></span>
+            <span class="mini-cell"></span>
+          </div>
+          <p>색상 영역당 토끼 1마리</p>
+        </div>
+
+        <div class="rule-demo">
+          <div class="mini-grid">
+            <span class="mini-cell"></span>
+            <span class="mini-cell mark-x"><span class="glyph x"><span class="bar bar1"></span><span class="bar bar2"></span></span></span>
+            <span class="mini-cell"></span>
+            <span class="mini-cell mark-x"><span class="glyph x"><span class="bar bar1"></span><span class="bar bar2"></span></span></span>
+            <span class="mini-cell mark-rabbit"><span class="glyph rabbit">🐰</span></span>
+            <span class="mini-cell mark-x"><span class="glyph x"><span class="bar bar1"></span><span class="bar bar2"></span></span></span>
+            <span class="mini-cell"></span>
+            <span class="mini-cell mark-x"><span class="glyph x"><span class="bar bar1"></span><span class="bar bar2"></span></span></span>
+            <span class="mini-cell"></span>
+          </div>
+          <p>행(row)당 1마리, 열(column)당 1마리</p>
+        </div>
+
+        <div class="rule-demo">
+          <div class="mini-grid">
+            <span class="mini-cell mark-x"><span class="glyph x"><span class="bar bar1"></span><span class="bar bar2"></span></span></span>
+            <span class="mini-cell mark-x"><span class="glyph x"><span class="bar bar1"></span><span class="bar bar2"></span></span></span>
+            <span class="mini-cell mark-x"><span class="glyph x"><span class="bar bar1"></span><span class="bar bar2"></span></span></span>
+            <span class="mini-cell mark-x"><span class="glyph x"><span class="bar bar1"></span><span class="bar bar2"></span></span></span>
+            <span class="mini-cell mark-rabbit"><span class="glyph rabbit">🐰</span></span>
+            <span class="mini-cell mark-x"><span class="glyph x"><span class="bar bar1"></span><span class="bar bar2"></span></span></span>
+            <span class="mini-cell mark-x"><span class="glyph x"><span class="bar bar1"></span><span class="bar bar2"></span></span></span>
+            <span class="mini-cell mark-x"><span class="glyph x"><span class="bar bar1"></span><span class="bar bar2"></span></span></span>
+            <span class="mini-cell mark-x"><span class="glyph x"><span class="bar bar1"></span><span class="bar bar2"></span></span></span>
+          </div>
+          <p>인접한 칸(상하좌우 + 대각선, 8방향)에는 토끼가 동시에 존재할 수 없음</p>
+        </div>
+      </div>
+
+      <h3>조작 방법</h3>
+      <div class="help-controls">
+        <div class="control-demo">
+          <span class="glyph x"><span class="bar bar1"></span><span class="bar bar2"></span></span>
+          <p>한 번 클릭 또는 드래그 → X 표시</p>
+        </div>
+        <div class="control-demo">
+          <span class="glyph rabbit">🐰</span>
+          <p>더블 클릭 → 토끼 표시</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Plain <script> tags (no bundler, no ES modules) so this runs by just double-clicking
+       index.html — no local server or build step required. Order matters: each file attaches
+       to the shared sudoGGU namespace and later files depend on earlier ones. -->
+  <script src="web/js/core/gameRules.js"></script>
+  <script src="web/js/core/rng.js"></script>
+  <script src="web/js/core/board.js"></script>
+  <script src="web/js/core/puzzleSolver.js"></script>
+  <script src="web/js/core/puzzleGenerator.js"></script>
+  <script src="web/js/game/gameManager.js"></script>
+  <script src="web/js/ui/boardInputController.js"></script>
+  <script src="web/js/ui/boardView.js"></script>
+  <script src="web/js/ui/livesView.js"></script>
+  <script src="web/js/main.js"></script>
+</body>
+</html>
